@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soil Health Monitoring System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: white;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .sensor-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .sensor-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .sensor-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .recommendations {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            white-space: pre-wrap;
+            line-height: 1.6;
+            display: none;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+        }
+        .ai-mode {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+        .fallback-mode {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .status.success { background: #d4edda; color: #155724; }
+        .status.error { background: #f8d7da; color: #721c24; }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Soil Health Monitoring System</h1>
+        
+        <div class="card">
+            <h2>Sensor Readings</h2>
+            <button onclick="startSensors()" id="startBtn">Start Reading Sensors</button>
+            <button onclick="stopSensors()" id="stopBtn" style="display:none; background: #dc3545;">Stop Sensors</button>
+            <div id="status" class="status" style="display:none;"></div>
+            <div class="sensor-grid" id="sensorGrid">
+                <div class="sensor-box">
+                    <div class="sensor-label">Temperature</div>
+                    <div class="sensor-value" id="temp">--</div>
+                    <div class="sensor-label">°C</div>
+                </div>
+                <div class="sensor-box">
+                    <div class="sensor-label">Humidity</div>
+                    <div class="sensor-value" id="humidity">--</div>
+                    <div class="sensor-label">%</div>
+                </div>
+                <div class="sensor-box">
+                    <div class="sensor-label">Moisture</div>
+                    <div class="sensor-value" id="moisture">--</div>
+                    <div class="sensor-label">%</div>
+                </div>
+                <div class="sensor-box">
+                    <div class="sensor-label">Nitrogen (N)</div>
+                    <div class="sensor-value" id="nitrogen">--</div>
+                    <div class="sensor-label">mg/kg</div>
+                </div>
+                <div class="sensor-box">
+                    <div class="sensor-label">Phosphorus (P)</div>
+                    <div class="sensor-value" id="phosphorus">--</div>
+                    <div class="sensor-label">mg/kg</div>
+                </div>
+                <div class="sensor-box">
+                    <div class="sensor-label">Potassium (K)</div>
+                    <div class="sensor-value" id="potassium">--</div>
+                    <div class="sensor-label">mg/kg</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>Farmer Information</h2>
+            <form id="farmerForm">
+                <div class="form-group">
+                    <label>Location (City):</label>
+                    <input type="text" id="location" placeholder="e.g., Pune, Maharashtra" required>
+                </div>
+                <div class="form-group">
+                    <label>Current Month:</label>
+                    <select id="month" required>
+                        <option value="">Select Month</option>
+                        <option value="January">January</option>
+                        <option value="February">February</option>
+                        <option value="March">March</option>
+                        <option value="April">April</option>
+                        <option value="May">May</option>
+                        <option value="June">June</option>
+                        <option value="July">July</option>
+                        <option value="August">August</option>
+                        <option value="September">September</option>
+                        <option value="October">October</option>
+                        <option value="November">November</option>
+                        <option value="December">December</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Desired Crop:</label>
+                    <input type="text" id="crop" placeholder="e.g., Cotton, Wheat, Rice, Kiwi" required>
+                </div>
+                <button type="submit">Get Soil Analysis & Recommendations</button>
+            </form>
+            <div class="loading" id="loading">
+                <p>🔄 Analyzing soil data with AI... This may take a moment.</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>AI Recommendations</h2>
+            <div class="ai-mode" id="aiMode">🤖 AI Mode Active - Using Advanced Analysis</div>
+            <div class="fallback-mode" id="fallbackMode">⚠️ Fallback Mode - Start Ollama for AI Analysis</div>
+            <div class="recommendations" id="recommendations">
+                Submit the form above to get personalized recommendations.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sensorInterval = null;
+
+        function startSensors() {
+            fetch('/api/start-sensors', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('status').textContent = data.status;
+                    document.getElementById('status').className = 'status success';
+                    document.getElementById('status').style.display = 'block';
+                    document.getElementById('startBtn').style.display = 'none';
+                    document.getElementById('stopBtn').style.display = 'block';
+                    
+                    // Start polling for sensor data
+                    sensorInterval = setInterval(updateSensorData, 1000);
+                });
+        }
+
+        function stopSensors() {
+            fetch('/api/stop-sensors', { method: 'POST' })
+                .then(r => r.json())
+                .then(data => {
+                    document.getElementById('status').textContent = data.status;
+                    document.getElementById('status').className = 'status error';
+                    document.getElementById('startBtn').style.display = 'block';
+                    document.getElementById('stopBtn').style.display = 'none';
+                    
+                    if (sensorInterval) {
+                        clearInterval(sensorInterval);
+                    }
+                });
+        }
+
+        function updateSensorData() {
+            fetch('/api/sensor-data')
+                .then(r => r.json())
+                .then(data => {
+                    if (Object.keys(data).length > 0) {
+                        document.getElementById('temp').textContent = data.temp || '--';
+                        document.getElementById('humidity').textContent = data.humidity || '--';
+                        document.getElementById('moisture').textContent = data.moisture || '--';
+                        document.getElementById('nitrogen').textContent = data.nitrogen || '--';
+                        document.getElementById('phosphorus').textContent = data.phosphorus || '--';
+                        document.getElementById('potassium').textContent = data.potassium || '--';
+                    }
+                });
+        }
+
+        document.getElementById('farmerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const farmerInput = {
+                location: document.getElementById('location').value,
+                month: document.getElementById('month').value,
+                crop: document.getElementById('crop').value
+            };
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('recommendations').style.display = 'none';
+            
+            fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(farmerInput)
+            })
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('recommendations').style.display = 'block';
+                document.getElementById('recommendations').textContent = data.recommendations;
+                
+                // Show mode indicator
+                if (data.recommendations.includes('🤖 AI-POWERED ANALYSIS')) {
+                    document.getElementById('aiMode').style.display = 'block';
+                    document.getElementById('fallbackMode').style.display = 'none';
+                } else if (data.recommendations.includes('FALLBACK MODE')) {
+                    document.getElementById('aiMode').style.display = 'none';
+                    document.getElementById('fallbackMode').style.display = 'block';
+                } else {
+                    document.getElementById('aiMode').style.display = 'none';
+                    document.getElementById('fallbackMode').style.display = 'none';
+                }
+            })
+            .catch(err => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('recommendations').style.display = 'block';
+                document.getElementById('recommendations').textContent = 'Error: ' + err.message;
+            });
+        });
+    </script>
+</body>
+</html>
