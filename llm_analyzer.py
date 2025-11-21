@@ -107,30 +107,33 @@ class SoilAnalyzer:
                 weather_context = ""
                 weather_instructions = ""
         
-        prompt = f"""You are an agricultural advisor specialized in Indian soil, climate, and crop science. A farmer wants to grow {crop} in {location} during {month}. You are given real-time field sensor values:
+        prompt = f"""You are an agricultural advisor. A farmer wants to grow {crop} in {location} during {month}.
 
-SOIL SENSOR DATA:
-Temperature: {temp}°C
-Humidity: {humidity}%
-Soil Moisture: {moisture}%
-Nitrogen: {nitrogen} mg/kg
-Phosphorus: {phosphorus} mg/kg
-Potassium: {potassium} mg/kg
+SOIL DATA:
+Temperature: {temp}°C | Humidity: {humidity}% | Moisture: {moisture}%
+Nitrogen: {nitrogen} mg/kg | Phosphorus: {phosphorus} mg/kg | Potassium: {potassium} mg/kg
 {weather_context}
 
-Your task is to give a clear, practical assessment for the farmer without using bullet points or tables. Avoid scientific jargon unless needed. Keep the tone simple, helpful, and precise.
+Provide a concise analysis in 4 SHORT sections. Each section should be 2-3 sentences maximum. Use simple language.
 
-Focus on four things: suitability, problems, corrections, and final guidance.
+SECTION 1 - SUITABILITY:
+Is {crop} suitable for {location} in {month}? State clearly: Excellent/Good/Moderate/Poor. Mention the main reason.{weather_instructions}
 
-First, explain whether {crop} is suitable to grow in {location} during {month}. Describe the typical climate expected in this month and how it affects this crop. Mention if the planting time is ideal, acceptable, or risky.{weather_instructions}
+SECTION 2 - SOIL ISSUES:
+Compare NPK values to ideal ranges for {crop}. State which nutrients are low/high and by how much. Example: "Nitrogen at {nitrogen} mg/kg is 20 mg/kg below ideal 50 mg/kg."
 
-Then interpret the NPK and moisture values by comparing them to the ideal ranges for {crop}. Explain which nutrients are low or high and how serious the imbalance is. If possible, mention how much more or less nutrient is needed.
+SECTION 3 - FERTILIZER PLAN:
+Give exact amounts in kg per acre:
+- Urea: X kg/acre in Y splits (timing)
+- DAP: X kg/acre (timing)
+- MOP: X kg/acre (timing)
+State irrigation frequency based on {moisture}% moisture.
+In point wise manner .
 
-After that, give exact and practical improvement steps. Include fertilizer amounts in kg per acre, irrigation needs based on the soil moisture level, and any organic matter requirements. Give simple instructions such as how many splits to apply, when to irrigate next, and how much water to use.
+SECTION 4 - RECOMMENDATION:
+Should farmer proceed? Expected yield? One major risk to watch. Alternative crop if unsuitable.
 
-Finally, give actionable predictions. Explain whether the farmer should go ahead with this crop, what yield they can expect under current conditions, what risks to consider, and what alternative crop would perform better if suitability is low.
-
-Keep the response concise but informative. Do not use bullets, numbering, or formatting symbols like asterisks or dashes. Speak naturally as if talking to a real farmer."""
+Keep each section under 200 words. Be direct and specific with numbers.And don,t use any asteriks keep the output humainise ."""
         
         return prompt
     

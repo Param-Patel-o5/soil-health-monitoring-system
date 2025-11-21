@@ -11,25 +11,47 @@ class WeatherService:
         """Get current weather and forecast for location (fails gracefully)"""
         if not self.api_key or self.api_key == "YOUR_OPENWEATHER_API_KEY":
             return None
+        
+        # Clean location name and try multiple formats
+        location = location.strip().title()  # "nashik" -> "Nashik"
+        
+        # Try different location formats
+        location_formats = [
+            f"{location},IN",
+            f"{location},India",
+            location
+        ]
             
         try:
-            # Get current weather
-            current_url = f"{self.base_url}/weather?q={location},IN&appid={self.api_key}&units=metric"
-            current_response = requests.get(current_url, timeout=5)
+            current_data = None
+            # Try each format until one works
+            for loc_format in location_formats:
+                try:
+                    current_url = f"{self.base_url}/weather?q={loc_format}&appid={self.api_key}&units=metric"
+                    current_response = requests.get(current_url, timeout=5)
+                    
+                    if current_response.status_code == 200:
+                        current_data = current_response.json()
+                        break
+                except:
+                    continue
             
-            if current_response.status_code != 200:
-                # Fail silently - weather is optional
+            if not current_data:
                 return None
-            
-            current_data = current_response.json()
             
             # Get 5-day forecast (optional, don't fail if this doesn't work)
             forecast_data = None
             try:
-                forecast_url = f"{self.base_url}/forecast?q={location},IN&appid={self.api_key}&units=metric"
-                forecast_response = requests.get(forecast_url, timeout=5)
-                if forecast_response.status_code == 200:
-                    forecast_data = forecast_response.json()
+                # Use the same location format that worked for current weather
+                for loc_format in location_formats:
+                    try:
+                        forecast_url = f"{self.base_url}/forecast?q={loc_format}&appid={self.api_key}&units=metric"
+                        forecast_response = requests.get(forecast_url, timeout=5)
+                        if forecast_response.status_code == 200:
+                            forecast_data = forecast_response.json()
+                            break
+                    except:
+                        continue
             except:
                 pass  # Forecast is nice-to-have
             
@@ -111,29 +133,17 @@ class WeatherService:
         return forecast_summary
     
     def format_for_prompt(self, weather_data):
-        """Format weather data for AI prompt"""
+        """Format weather data for AI prompt - concise version"""
         if not weather_data:
-            return "Weather data unavailable."
+            return ""
         
         current = weather_data['current']
         prompt_text = f"""
-LIVE WEATHER DATA:
-Current Conditions:
-- Temperature: {current['temperature']}°C (Feels like: {current['feels_like']}°C)
-- Humidity: {current['humidity']}%
-- Weather: {current['weather']}
-- Wind Speed: {current['wind_speed']} m/s
-- Recent Rainfall: {current['rainfall_3h']} mm (last 3 hours)
-"""
+LIVE WEATHER: {current['temperature']}°C, {current['weather']}, Humidity {current['humidity']}%"""
         
         if 'forecast' in weather_data:
             forecast = weather_data['forecast']
-            prompt_text += f"""
-3-Day Forecast:
-- Average Temperature: {forecast['avg_temp']}°C
-- Average Humidity: {forecast['avg_humidity']}%
-- Rain Expected: {'Yes' if forecast['rain_expected'] else 'No'}
-- Expected Rainfall: {forecast['total_rainfall']} mm
-"""
+            rain_info = f", Rain expected: {forecast['total_rainfall']}mm" if forecast['rain_expected'] else ", No rain expected"
+            prompt_text += f""", Next 3 days: {forecast['avg_temp']}°C avg{rain_info}"""
         
         return prompt_text
