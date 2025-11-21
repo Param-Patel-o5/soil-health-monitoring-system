@@ -9,11 +9,11 @@ class SoilAnalyzer:
         self.gemini_api_key = gemini_api_key or os.getenv('GEMINI_API_KEY')
         self.gemini_url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
         
-    def analyze_soil(self, sensor_data, farmer_input):
+    def analyze_soil(self, sensor_data, farmer_input, weather_data=None):
         """Analyze soil data and provide recommendations"""
         
-        # Build context prompt
-        prompt = self._build_prompt(sensor_data, farmer_input)
+        # Build context prompt with weather data
+        prompt = self._build_short_prompt(sensor_data, farmer_input, weather_data)
         
         # Try Google Gemini first if enabled
         if self.use_gemini and self.gemini_api_key:
@@ -79,8 +79,8 @@ class SoilAnalyzer:
     
 
     
-    def _build_short_prompt(self, sensor_data, farmer_input):
-        """Build shorter, faster prompt for Gemini"""
+    def _build_short_prompt(self, sensor_data, farmer_input, weather_data=None):
+        """Build shorter, faster prompt for Gemini with optional weather integration"""
         crop = farmer_input.get('crop', 'the crop')
         location = farmer_input.get('location', 'the location')
         month = farmer_input.get('month', 'this month')
@@ -92,24 +92,41 @@ class SoilAnalyzer:
         phosphorus = sensor_data.get('phosphorus', 'N/A')
         potassium = sensor_data.get('potassium', 'N/A')
         
+        # Build weather context only if available
+        weather_context = ""
+        weather_instructions = ""
+        
+        if weather_data:
+            try:
+                from weather_service import WeatherService
+                ws = WeatherService(None)
+                weather_context = ws.format_for_prompt(weather_data)
+                weather_instructions = " Use the live weather data to provide more accurate irrigation timing and fertilizer application advice. If rain is forecasted, adjust irrigation recommendations. If temperature extremes are expected, warn about stress risks."
+            except Exception as e:
+                # Weather formatting failed, continue without it
+                weather_context = ""
+                weather_instructions = ""
+        
         prompt = f"""You are an agricultural advisor specialized in Indian soil, climate, and crop science. A farmer wants to grow {crop} in {location} during {month}. You are given real-time field sensor values:
 
+SOIL SENSOR DATA:
 Temperature: {temp}°C
 Humidity: {humidity}%
 Soil Moisture: {moisture}%
 Nitrogen: {nitrogen} mg/kg
 Phosphorus: {phosphorus} mg/kg
 Potassium: {potassium} mg/kg
+{weather_context}
 
 Your task is to give a clear, practical assessment for the farmer without using bullet points or tables. Avoid scientific jargon unless needed. Keep the tone simple, helpful, and precise.
 
 Focus on four things: suitability, problems, corrections, and final guidance.
 
-First, explain whether {crop} is suitable to grow in {location} during {month}. Describe the expected climate in this month and how it affects this crop. Mention if the planting time is ideal, acceptable, or risky.
+First, explain whether {crop} is suitable to grow in {location} during {month}. Describe the typical climate expected in this month and how it affects this crop. Mention if the planting time is ideal, acceptable, or risky.{weather_instructions}
 
 Then interpret the NPK and moisture values by comparing them to the ideal ranges for {crop}. Explain which nutrients are low or high and how serious the imbalance is. If possible, mention how much more or less nutrient is needed.
 
-After that, give exact and practical improvement steps. Include fertilizer amounts in kg per acre, irrigation needs based on the moisture level, and any organic matter requirements. Give simple instructions such as how many splits to apply, when to irrigate next, and how much water to use.
+After that, give exact and practical improvement steps. Include fertilizer amounts in kg per acre, irrigation needs based on the soil moisture level, and any organic matter requirements. Give simple instructions such as how many splits to apply, when to irrigate next, and how much water to use.
 
 Finally, give actionable predictions. Explain whether the farmer should go ahead with this crop, what yield they can expect under current conditions, what risks to consider, and what alternative crop would perform better if suitability is low.
 

@@ -1,15 +1,18 @@
 from flask import Flask, render_template, request, jsonify
 from llm_analyzer import SoilAnalyzer
+from weather_service import WeatherService
 import random
 import time
 
 # Import configuration
 try:
-    from config import USE_GEMINI, GEMINI_API_KEY
+    from config import USE_GEMINI, GEMINI_API_KEY, USE_WEATHER_API, OPENWEATHER_API_KEY
 except ImportError:
     # Default values if config.py doesn't exist
     USE_GEMINI = True
     GEMINI_API_KEY = None
+    USE_WEATHER_API = False
+    OPENWEATHER_API_KEY = None
 
 app = Flask(__name__)
 
@@ -18,6 +21,18 @@ soil_analyzer = SoilAnalyzer(
     use_gemini=USE_GEMINI,
     gemini_api_key=GEMINI_API_KEY
 )
+
+# Weather service (optional enhancement)
+weather_service = None
+try:
+    if USE_WEATHER_API and OPENWEATHER_API_KEY and OPENWEATHER_API_KEY != "YOUR_OPENWEATHER_API_KEY":
+        weather_service = WeatherService(OPENWEATHER_API_KEY)
+        print("🌤️  Weather API: Enabled")
+    else:
+        print("🌤️  Weather API: Disabled (optional)")
+except Exception as e:
+    print(f"🌤️  Weather API: Failed to initialize ({e})")
+    weather_service = None
 demo_sensor_data = {
     'temp': 28.5,
     'humidity': 65,
@@ -60,12 +75,28 @@ def analyze():
         'potassium': round(demo_sensor_data['potassium'] + random.uniform(-5, 5), 1)
     }
     
+    # Get weather data if available (optional enhancement)
+    weather_data = None
+    if weather_service:
+        try:
+            location = farmer_input.get('location', '')
+            print(f"🌤️  Fetching weather data for: {location}")
+            weather_data = weather_service.get_weather_data(location)
+            if weather_data:
+                print(f"   ✓ Weather data retrieved successfully")
+            else:
+                print(f"   ✗ Weather data unavailable (continuing without it)")
+        except Exception as e:
+            print(f"   ✗ Weather API error: {e} (continuing without weather data)")
+            weather_data = None
+    
     # Get LLM analysis
     print(f"\n🔍 Analyzing soil for: {farmer_input.get('crop')} in {farmer_input.get('location')}")
     print(f"   Using Gemini: {USE_GEMINI}")
     print(f"   API Key present: {bool(GEMINI_API_KEY and GEMINI_API_KEY != 'YOUR_API_KEY_HERE')}")
+    print(f"   Weather integration: {bool(weather_data)}")
     
-    recommendations = soil_analyzer.analyze_soil(current_data, farmer_input)
+    recommendations = soil_analyzer.analyze_soil(current_data, farmer_input, weather_data)
     
     print(f"✅ Analysis complete. Response length: {len(recommendations)} chars")
     
@@ -92,7 +123,7 @@ if __name__ == '__main__':
     print("📌 No Arduino required for testing")
     print("📌 Open browser: http://localhost:5000")
     print(f"\n🔧 Configuration:")
-    print(f"   USE_GEMINI: {USE_GEMINI}")
-    print(f"   GEMINI_API_KEY: {'Set' if GEMINI_API_KEY and GEMINI_API_KEY != 'YOUR_API_KEY_HERE' else 'NOT SET'}")
+    print(f"   AI Analysis (Gemini): {'Enabled' if USE_GEMINI and GEMINI_API_KEY and GEMINI_API_KEY != 'YOUR_API_KEY_HERE' else 'Disabled - Using Fallback'}")
+    print(f"   Weather Enhancement: {'Enabled' if weather_service else 'Disabled (Optional)'}")
     print("\n" + "="*60 + "\n")
     app.run(debug=True, port=5000)
