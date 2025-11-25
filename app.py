@@ -4,11 +4,18 @@ from llm_analyzer import SoilAnalyzer
 import threading
 import time
 
+# Import configuration
+try:
+    from config import USE_GEMINI, GEMINI_API_KEY
+except ImportError:
+    USE_GEMINI = True
+    GEMINI_API_KEY = None
+
 app = Flask(__name__)
 
 # Global variables
-sensor_reader = SensorReader(port='COM3')  # Change COM port as needed
-soil_analyzer = SoilAnalyzer(model='llama3.2')
+sensor_reader = SensorReader(port='COM4')  # Arduino on COM4 with NPK sensor
+soil_analyzer = SoilAnalyzer(use_gemini=USE_GEMINI, gemini_api_key=GEMINI_API_KEY)
 latest_sensor_data = {}
 sensor_thread = None
 reading_sensors = False

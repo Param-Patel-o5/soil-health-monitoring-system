@@ -54,7 +54,8 @@ class SoilAnalyzer:
                             if finish_reason == 'MAX_TOKENS':
                                 ai_response += "\n\n[Note: Response was truncated due to length. The analysis covers the most critical aspects.]"
                             
-                            return f"🤖 AI-POWERED ANALYSIS (Using Google Gemini 2.5 Flash)\n{'='*60}\n\n{ai_response}"
+                            # Return clean response without header
+                            return ai_response
                         else:
                             print(f"Gemini returned no text (only thinking tokens)")
                             print(f"Response: {result}")
@@ -107,33 +108,40 @@ class SoilAnalyzer:
                 weather_context = ""
                 weather_instructions = ""
         
-        prompt = f"""You are an agricultural advisor. A farmer wants to grow {crop} in {location} during {month}.
+        prompt = f"""You are an agricultural advisor who explains things in simple, practical farmer-friendly language. A farmer wants to grow {crop} in {location} during {month}. Use the data below to give a clear and helpful analysis.
 
-SOIL DATA:
-Temperature: {temp}°C | Humidity: {humidity}% | Moisture: {moisture}%
-Nitrogen: {nitrogen} mg/kg | Phosphorus: {phosphorus} mg/kg | Potassium: {potassium} mg/kg
+SOIL DATA
+Temperature: {temp} °C
+Humidity: {humidity} %
+Soil Moisture: {moisture} %
+Nitrogen: {nitrogen} mg/kg
+Phosphorus: {phosphorus} mg/kg
+Potassium: {potassium} mg/kg
 {weather_context}
 
-Provide a concise analysis in 4 SHORT sections. Each section should be 2-3 sentences maximum. Use simple language.
+Give the answer in FIVE sections. Start each section with a heading in this exact format: <h3>Heading Name</h3>. Write in simple paragraphs. Do NOT use hashtags, asterisks, hyphens, or bullet points anywhere except for fertilizer numbering.
 
-SECTION 1 - SUITABILITY:
-Is {crop} suitable for {location} in {month}? State clearly: Excellent/Good/Moderate/Poor. Mention the main reason.{weather_instructions}
+<h3>Crop Suitability</h3>
+Explain if growing {crop} in {location} during {month} is Excellent, Good, Moderate, or Poor. Give the main reason in 2-3 sentences. If weather data is available, adjust for rain, heat or cold. Mention stress or irrigation needs if required.
 
-SECTION 2 - SOIL ISSUES:
-Compare NPK values to ideal ranges for {crop}. State which nutrients are low/high and by how much. Example: "Nitrogen at {nitrogen} mg/kg is 20 mg/kg below ideal 50 mg/kg."
+<h3>Soil Nutrient Status</h3>
+Compare the NPK values with the ideal range for {crop}. Say which nutrients are low or high and by how much in 2-3 sentences. Use natural language like Nitrogen is lower than the ideal level by around X mg/kg.
 
-SECTION 3 - FERTILIZER PLAN:
-Give exact amounts in kg per acre:
-- Urea: X kg/acre in Y splits (timing)
-- DAP: X kg/acre (timing)
-- MOP: X kg/acre (timing)
-State irrigation frequency based on {moisture}% moisture.
-In point wise manner .
+<h3>Fertilizer Plan</h3>
+Write the fertilizer plan in numbered points (1, 2, 3) with exact amounts in kg per acre and timing. For example:
+1. Urea 60 kg per acre - Apply in three splits: first at sowing, second after 20 days, third at flowering stage
+2. DAP 50 kg per acre - Apply before sowing
+3. MOP 40 kg per acre - Apply at flowering stage
 
-SECTION 4 - RECOMMENDATION:
-Should farmer proceed? Expected yield? One major risk to watch. Alternative crop if unsuitable.
+After fertilizers, add any important notes about nutrient management in one sentence.
 
-Keep each section under 200 words. Be direct and specific with numbers.And don,t use any asteriks keep the output humainise ."""
+<h3>Irrigation Plan</h3>
+Write about irrigation in a paragraph. Be specific based on the soil moisture value of {moisture} percent. If moisture is high (above 800), say wait X days before first irrigation. If moisture is medium (400-800), say irrigate every X days. If moisture is low (below 400), say irrigate immediately and then every X days. Mention critical stages when water is most needed like flowering, boll formation, etc.
+
+<h3>Final Advice</h3>
+Tell the farmer whether they should go ahead in 2-3 sentences. Mention the expected yield range based on the conditions. Add one major risk. Suggest one alternative crop if this crop is not ideal.
+
+Keep the explanation helpful, simple and personalised. Use numbered points only for fertilizers. Use <h3> tags for all headings. Everything else should be plain paragraphs. Avoid technical terms unless needed."""
         
         return prompt
     
@@ -267,9 +275,9 @@ Keep each section under 200 words. Be direct and specific with numbers.And don,t
         
         analysis += f"\n{'='*60}\n"
         analysis += "⚠️ FALLBACK MODE: This is a basic rule-based analysis.\n"
-        analysis += "🤖 For AI-powered intelligent analysis, start Ollama:\n"
-        analysis += "   1. Double-click 'start_ollama.bat'\n"
-        analysis += "   2. Or run: ollama serve\n"
-        analysis += "   3. Then refresh and try again\n"
+        analysis += "🤖 For AI-powered intelligent analysis:\n"
+        analysis += "   • Check if Google Gemini API key is set in config.py\n"
+        analysis += "   • Ensure internet connection is active\n"
+        analysis += "   • Verify USE_GEMINI = True in config.py\n"
         
         return analysis

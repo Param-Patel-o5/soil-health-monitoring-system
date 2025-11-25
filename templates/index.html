@@ -88,13 +88,27 @@
         }
         .recommendations {
             background: #f8f9fa;
-            padding: 20px;
+            padding: 30px;
             border-radius: 10px;
             white-space: pre-wrap;
-            line-height: 1.6;
+            line-height: 1.8;
             display: none;
-            font-family: 'Courier New', monospace;
-            font-size: 0.95em;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 1.05em;
+            max-width: 100%;
+            color: #333;
+        }
+        .recommendations h3 {
+            color: #667eea;
+            font-size: 1.4em;
+            font-weight: bold;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        .recommendations h3:first-child {
+            margin-top: 0;
         }
         .ai-mode {
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
@@ -213,7 +227,7 @@
         <div class="card">
             <h2>AI Recommendations</h2>
             <div class="ai-mode" id="aiMode">🤖 AI Mode Active - Using Advanced Analysis</div>
-            <div class="fallback-mode" id="fallbackMode">⚠️ Fallback Mode - Start Ollama for AI Analysis</div>
+            <div class="fallback-mode" id="fallbackMode">⚠️ Fallback Mode - Check Gemini API Key or Internet Connection</div>
             <div class="recommendations" id="recommendations">
                 Submit the form above to get personalized recommendations.
             </div>
@@ -289,7 +303,7 @@
             .then(data => {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('recommendations').style.display = 'block';
-                document.getElementById('recommendations').textContent = data.recommendations;
+                document.getElementById('recommendations').innerHTML = data.recommendations;
                 
                 // Show mode indicator
                 if (data.recommendations.includes('🤖 AI-POWERED ANALYSIS')) {

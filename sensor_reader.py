@@ -3,7 +3,7 @@ import json
 import time
 
 class SensorReader:
-    def __init__(self, port='COM3', baudrate=9600):
+    def __init__(self, port='COM4', baudrate=9600):
         """Initialize serial connection to Arduino"""
         self.port = port
         self.baudrate = baudrate
@@ -27,9 +27,11 @@ class SensorReader:
             
         try:
             if self.serial_conn.in_waiting > 0:
-                line = self.serial_conn.readline().decode('utf-8').strip()
+                line = self.serial_conn.readline().decode('utf-8', errors='ignore').strip()
+                print(f"Arduino says: {line}")  # Debug
                 if line.startswith('{') and line.endswith('}'):
                     data = json.loads(line)
+                    print(f"Parsed data: {data}")  # Debug
                     return data
         except Exception as e:
             print(f"Error reading sensor data: {e}")

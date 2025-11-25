@@ -1,18 +1,15 @@
 from flask import Flask, render_template, request, jsonify
 from llm_analyzer import SoilAnalyzer
-from weather_service import WeatherService
 import random
 import time
 
 # Import configuration
 try:
-    from config import USE_GEMINI, GEMINI_API_KEY, USE_WEATHER_API, OPENWEATHER_API_KEY
+    from config import USE_GEMINI, GEMINI_API_KEY
 except ImportError:
     # Default values if config.py doesn't exist
     USE_GEMINI = True
     GEMINI_API_KEY = None
-    USE_WEATHER_API = False
-    OPENWEATHER_API_KEY = None
 
 app = Flask(__name__)
 
@@ -22,17 +19,8 @@ soil_analyzer = SoilAnalyzer(
     gemini_api_key=GEMINI_API_KEY
 )
 
-# Weather service (optional enhancement)
+# Weather service disabled
 weather_service = None
-try:
-    if USE_WEATHER_API and OPENWEATHER_API_KEY and OPENWEATHER_API_KEY != "YOUR_OPENWEATHER_API_KEY":
-        weather_service = WeatherService(OPENWEATHER_API_KEY)
-        print("🌤️  Weather API: Enabled")
-    else:
-        print("🌤️  Weather API: Disabled (optional)")
-except Exception as e:
-    print(f"🌤️  Weather API: Failed to initialize ({e})")
-    weather_service = None
 demo_sensor_data = {
     'temp': 28.5,
     'humidity': 65,

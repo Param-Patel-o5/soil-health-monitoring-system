@@ -1,10 +1,14 @@
 @echo off
-echo Starting Soil Health Monitoring System...
+echo ========================================
+echo   Soil Health Monitoring System
+echo ========================================
 echo.
-echo Make sure:
-echo - Arduino is connected via USB
-echo - Ollama is running (it starts automatically on Windows)
-echo - COM port in app.py matches your Arduino
+echo Starting with Arduino (Real Sensors)...
+echo.
+echo Requirements:
+echo - Arduino connected on COM4
+echo - Sensors: DHT11, Moisture, NPK
+echo - Internet (for AI analysis)
 echo.
 echo Opening browser in 3 seconds...
 timeout /t 3 /nobreak >nul
