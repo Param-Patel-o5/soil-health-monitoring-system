@@ -12,6 +12,13 @@
 #define RX_PIN 7
 #define TX_PIN 4
 
+// MOISTURE SENSOR CALIBRATION
+// CALIBRATED VALUES FOR YOUR SENSOR:
+// Air (dry): 1023
+// Water (wet): 650 (measured by immersing electrodes fully in water)
+#define MOISTURE_AIR_VALUE 1023    // Sensor value in air (dry)
+#define MOISTURE_WATER_VALUE 650   // Sensor value in water (wet) - CALIBRATED!
+
 // Initialize Sensors
 DHT dht(DHTPIN, DHTTYPE);
 SoftwareSerial rs485(RX_PIN, TX_PIN);
@@ -75,7 +82,15 @@ bool readNPK() {
 
 void loop() {
   // --- 1. MOISTURE ---
-  int moisture_val = analogRead(MOISTURE_PIN);
+  int moisture_raw = analogRead(MOISTURE_PIN);
+  
+  // Calculate moisture percentage (0-100%)
+  // Formula: (air_value - current_value) / (air_value - water_value) * 100
+  float moisture_percent = ((float)(MOISTURE_AIR_VALUE - moisture_raw) / (float)(MOISTURE_AIR_VALUE - MOISTURE_WATER_VALUE)) * 100.0;
+  
+  // Constrain to 0-100% range (in case of calibration errors)
+  if (moisture_percent < 0) moisture_percent = 0;
+  if (moisture_percent > 100) moisture_percent = 100;
   
   // --- 2. DHT (With Retry Logic) ---
   float h = dht.readHumidity();
@@ -103,11 +118,11 @@ void loop() {
   if (!isnan(h) && !isnan(t)) {
     Serial.print("{");
     Serial.print("\"temp\":");
-    Serial.print(t);
+    Serial.print(t, 1);  // 1 decimal place
     Serial.print(",\"humidity\":");
-    Serial.print(h);
+    Serial.print(h, 1);  // 1 decimal place
     Serial.print(",\"moisture\":");
-    Serial.print((1024-moisture_val)/1024 * 100);  // Raw value, no conversion
+    Serial.print(moisture_percent, 1);  // Now properly calibrated 0-100%
     Serial.print(",\"nitrogen\":");
     Serial.print(nitrogen);
     Serial.print(",\"phosphorus\":");

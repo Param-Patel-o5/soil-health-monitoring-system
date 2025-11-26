@@ -3,7 +3,7 @@ import json
 import time
 
 class SensorReader:
-    def __init__(self, port='COM4', baudrate=9600):
+    def __init__(self, port='COM3', baudrate=9600):
         """Initialize serial connection to Arduino"""
         self.port = port
         self.baudrate = baudrate

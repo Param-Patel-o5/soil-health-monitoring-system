@@ -14,7 +14,7 @@ except ImportError:
 app = Flask(__name__)
 
 # Global variables
-sensor_reader = SensorReader(port='COM4')  # Arduino on COM4 with NPK sensor
+sensor_reader = SensorReader(port='COM3')  # Arduino on COM4 with NPK sensor
 soil_analyzer = SoilAnalyzer(use_gemini=USE_GEMINI, gemini_api_key=GEMINI_API_KEY)
 latest_sensor_data = {}
 sensor_thread = None
